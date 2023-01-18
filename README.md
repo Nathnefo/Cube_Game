@@ -10,7 +10,7 @@ The goal of this game is to eat food (black square) with your player (blue squar
 
 ## Installation
 ---
-Download 'main.py' and run it with python 3.8 .
+Download the zip and run 'main.py' with python 3.8 .
 
 **Package** :  It use only pygame so if you have trouble make sure you have pygame 1.9.6 installed.
 
