@@ -12,14 +12,17 @@ class Scene:
         self.buttons = _buttons
 
     def on_quit(self):
-        pass
+        for button in self.buttons:
+            if button.mouse_was_hover:
+                button.on_mouse_quit()
+                button.mouse_was_hover = False
 
 class Game(Scene):
     def __init__(self, _engine):
         self.engine = _engine
         window = _engine.window
-        self.player = Player(0, 0, window)
-        self.ennemy = Ennemy(500, 500, 25, 25, 2, Color.red)
+        self.player = Player(window.width//2, window.height//2, window)
+        self.ennemy = Ennemy(0, 0, 25, 25, 2, Color.red)
         self.foods = [Food(window) for _ in range(5)]
         self.point = 0
         self.text_point = Text(self.engine, 20, 20, _text="Points : {self.engine.game.point}", _color=Color.black, _size=50, _fstring=True)
@@ -41,7 +44,6 @@ class Game(Scene):
             self.point-=5
             self.foods += [Food(self.engine.window)]
 
-
 class Main_Menu(Scene):
     def __init__(self, engine):
         window = engine.window
@@ -53,12 +55,6 @@ class Main_Menu(Scene):
         super().__init__(0, Color.l_grey, [], [self.title, self.play_button, self.settings_button, self.leave_button], [self.play_button, self.settings_button, self.leave_button])
 
 
-    def on_quit(self):
-        for button in self.buttons:
-            if button.mouse_was_hover:
-                button.on_mouse_quit()
-                button.mouse_was_hover = False
-
 class Retry_Menu(Scene):
     def __init__(self, engine):
         window = engine.window
@@ -67,9 +63,3 @@ class Retry_Menu(Scene):
         self.leave_button = Button(engine, window.width//2- 100, window.height//2 + 55, _text="Quit", _hover_color=Color.red, _on_click=engine.stop_all)
 
         super().__init__(2, None, [], [self.retry_button, self.main_menu_button, self.leave_button], [self.retry_button, self.main_menu_button, self.leave_button])
-    
-    def on_quit(self):
-        for button in self.buttons:
-            if button.mouse_was_hover:
-                button.on_mouse_quit()
-                button.mouse_was_hover = False

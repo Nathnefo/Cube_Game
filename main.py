@@ -2,11 +2,13 @@ import pygame
 from color import *
 from scenes import *
 
+RESOLUTION = (1920, 1080)
+
 class Window:
-    def __init__(self, title, _width, _height):
-        self.width = _width
-        self.height = _height
-        self.screen = pygame.display.set_mode((_width, _height))
+    def __init__(self, title, _resolution):
+        self.width = _resolution[0]
+        self.height = _resolution[1]
+        self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(title)
 
 class Render:
@@ -16,6 +18,8 @@ class Render:
         self.title_font = pygame.font.SysFont(None, 70)
 
     def update(self, scene):
+        """Rendering the current scene by filling the background color, blitting the entities, 
+        and drawing the GUI elements. Also renders the fps in the top right corner"""
         if scene.background_colour != None:
             self.window.screen.fill(scene.background_colour)
 
@@ -46,40 +50,54 @@ class Engine:
         self.scenes = [self.main_menu, self.game, self.retry_menu]
         self.current_scene_num = 0
         self.current_scene = self.main_menu
-        self.before_click = False
+
+        self.left_click = False
+        self.left_was_pressed = False
     
     def detect_collide(self, obj1, obj2):
+        """Detect if two objects collide by checking if their coordinates overlap"""
         if obj1.x < obj2.x + obj2.width and obj1.x + obj1.width > obj2.x:
             if obj1.y < obj2.y + obj2.height and obj1.y + obj1.height > obj2.y:
                 return True
         return False
     
-    def mouse_hover(self, x, y, button):
-        if (x > button.x and x < button.x + button.width) and (y > button.y and y < button.y + button.height):
+    def mouse_hover(self, x, y, element):
+        if (x > element.x and x < element.x + element.width) and (y > element.y and y < element.y + element.height):
             return True
         return False
 
-    def update_buttons(self, scene):
+    def update_buttons(self):
         mouse = pygame.mouse.get_pos()
-        for button in scene.buttons:
-            if self.mouse_hover(mouse[0], mouse[1], button):
-                if not(button.mouse_was_hover):
-                    button.on_mouse_hover()
-                    button.mouse_was_hover = True
-            elif button.mouse_was_hover:
+        for button in self.current_scene.buttons:
+            mouse_is_hover = self.mouse_hover(mouse[0], mouse[1], button)
+
+            """Button click event"""
+            if mouse_is_hover and self.left_click and button.on_click != None:
+                if button.arg == None:
+                    button.on_click()
+                else:
+                    button.on_click(button.arg)
+            
+            """Mouse hover events"""
+            if not(button.mouse_was_hover) and mouse_is_hover:
+                button.on_mouse_hover()
+                button.mouse_was_hover = True
+            elif button.mouse_was_hover and not(mouse_is_hover):
                 button.on_mouse_quit()
                 button.mouse_was_hover = False
 
-    def is_click(self):
-        left, middle, right = pygame.mouse.get_pressed()
-        if self.before_click and not(left):
-            self.before_click = False
-        elif not(self.before_click) and left:
-            self.before_click = True
-            return True
-        return False
+
+    def update_left_click(self):
+        """Detect if the left key is pressed and make a detection of a click"""
+        left_pressed, middle, right = pygame.mouse.get_pressed()
+        if self.left_click:
+            self.left_click = False
+        elif not(self.left_was_pressed) and left_pressed:
+            self.left_click = True
+        if self.left_was_pressed != left_pressed:
+            self.left_was_pressed = left_pressed
     
-    def eng_game(self):
+    def main_game_loop(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.current_scene.player.move("l")
@@ -98,6 +116,7 @@ class Engine:
                 food.eated()
                 self.current_scene.add_point()
         
+        """On collision between the player and the enemy, end the game"""
         if self.detect_collide(self.current_scene.player, self.current_scene.ennemy):
             self.render.update(self.current_scene)
             self.change_scene(2)
@@ -107,23 +126,18 @@ class Engine:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_running = False
-        
-            self.update_buttons(self.current_scene)
-            click = self.is_click()
-            if click:
-                for button in self.current_scene.buttons:
-                    if button.mouse_was_hover and button.on_click != None:
-                        if button.arg == None:
-                            button.on_click()
-                        else:
-                            button.on_click(button.arg)
-        
-            elif self.current_scene_num == 1:
-                self.eng_game()
+            
+            self.update_left_click()
+    
+            self.update_buttons()
+
+            if self.current_scene_num == 1:
+                self.main_game_loop()
             self.render.update(self.current_scene)
             self.clock.tick(180)
     
     def change_scene(self, num):
+        """When load scene 1, make a new game"""
         self.current_scene.on_quit()
         if num == 1:
             self.game = Game(self)
@@ -134,11 +148,8 @@ class Engine:
     def stop_all(self):
         self.is_running = False
 
-#(width, height) = (1200, 700)
-(width, height) = (1920, 1080)
-
 pygame.init()
-window = Window("Cube_game", width, height)
+window = Window("Cube_game", RESOLUTION)
 engine = Engine(window)
 
 engine.update()

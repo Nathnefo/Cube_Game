@@ -34,6 +34,7 @@ class Button(Gui):
         self.color = self.regular_color
     
     def draw(self):
+        """Draw current button with his text in the center"""
         pygame.draw.rect(self.engine.window.screen, self.color, [self.x,self.y, self.width, self.height])
         button_text = self.font.render(self.text, True, Color.white)
         text_rect = button_text.get_rect(center=self.get_center())
@@ -49,6 +50,7 @@ class Text(Gui):
         self.fstring = _fstring
     
     def draw(self):
+        """Draw current text, if it's fstring execute it"""
         if self.fstring:
             render_text = self.font.render(eval(f'f"""{self.text}"""'), True, self.color)
         else:

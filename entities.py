@@ -1,5 +1,5 @@
 import pygame
-import random
+from random import randint
 from color import *
 
 class Entity:
@@ -35,33 +35,40 @@ class Ennemy(Entity):
         super().__init__(_x, _y, _width, _height, _speed, _color) 
 
     def move(self, target_x, target_y):
+        """move towards target position and check that it does not exceed it"""
         center_x = self.x + self.width // 2
         center_y = self.y + self.width // 2
         if target_x < center_x:
-            if center_x- target_x < self.speed:
+            if center_x - target_x < self.speed:
                 self.x -= center_x - target_x
-            self.x -= self.speed
+            else:
+                self.x -= self.speed
         if target_x > center_x:
             if target_x - center_x < self.speed:
                  self.x += target_x - center_x
-            self.x += self.speed
+            else:
+                self.x += self.speed
         if target_y > center_y:
             if target_y - center_y < self.speed:
                  self.x += target_y - center_y
-            self.y += self.speed
+            else:
+                self.y += self.speed
         if target_y < center_y:
             if center_y - target_y < self.speed:
                 self.y += center_y - target_y
-            self.y -= self.speed
+            else:
+                self.y -= self.speed
         
 
 class Food(Entity):
     def __init__(self, _window, _width = 20, _height = 20, _speed = 1, _color = Color.black):
+        """Spawn on a random location"""
         self.window = _window
-        x = random.randint(0, self.window.width)
-        y = random.randint(0, self.window.height)
+        x = randint(0, self.window.width)
+        y = randint(0, self.window.height)
         super().__init__(x, y, _width, _height, _speed, _color) 
     
     def eated(self):
-        self.x = random.randint(0, self.window.width)
-        self.y = random.randint(0, self.window.height)
+        """If eaten, it teleport to a new random location"""
+        self.x = randint(0, self.window.width)
+        self.y = randint(0, self.window.height)
