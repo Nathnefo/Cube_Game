@@ -20,7 +20,9 @@ class Button(Gui):
     def __init__(self, _engine, _x, _y, _width = 200, _height = 50, _text= "", _color = Color.black, _hover_color = Color.l_green, _on_click = None, _arg = None):
         super().__init__(_engine, _x, _y, _width, _height, _color)
         self.font = pygame.font.SysFont(None, 25)
-        self.text = _text
+
+        center = self.get_center()
+        self.text = Text(_engine, center[0], center[1], _text=_text, _color= Color.white, _centered=True)
         self.regular_color = _color
         self.hover_color = _hover_color
         self.mouse_was_hover = False
@@ -35,10 +37,8 @@ class Button(Gui):
     
     def draw(self):
         """Draw current button with his text in the center"""
-        pygame.draw.rect(self.engine.window.screen, self.color, [self.x,self.y, self.width, self.height])
-        button_text = self.font.render(self.text, True, Color.white)
-        text_rect = button_text.get_rect(center=self.get_center())
-        self.engine.window.screen.blit(button_text, text_rect)
+        pygame.draw.rect(self.engine.display.screen, self.color, [self.x,self.y, self.width, self.height])
+        self.text.draw()
 
 
 class Text(Gui):
@@ -60,4 +60,31 @@ class Text(Gui):
             text_rect = render_text.get_rect(center=(self.x, self.y))
         else:
             text_rect = (self.x, self.y)
-        self.engine.window.screen.blit(render_text, text_rect)
+        self.engine.display.screen.blit(render_text, text_rect)
+
+class Check_mark(Gui):
+    def __init__(self, _engine, _x, _y, _width = 50, _height = 50, _color = Color.black, _state = False):
+        super().__init__(_engine, _x, _y, _width, _height, _color)
+        center = self.get_center()
+        self.state = _state
+        self.display = self.engine.display
+
+        self.mouse_was_hover = False
+        self.on_click = self.toggle_check_mark
+        self.arg = None
+    
+    def on_mouse_hover(self):
+        pass
+    
+    def on_mouse_quit(self):
+        pass
+    
+    def toggle_check_mark(self):
+        self.state = not(self.state)
+
+    def draw(self):
+        """Draw current button with his text in the center"""
+        pygame.draw.rect(self.display.screen, self.color, [self.x,self.y, self.width, self.height], 3)
+        if self.state:
+            pygame.draw.line(self.display.screen, self.color, (self.x + self.width // 5, self.y + self.height // 5) , (self.x + self.width - self.width // 5, self.y + self.height - self.height // 5), 5)
+            pygame.draw.line(self.display.screen, self.color, (self.x + self.width // 5 ,self.y + self.height - self.height // 5) , (self.x + self.width - self.width // 5, self.y + self.height // 5), 5)

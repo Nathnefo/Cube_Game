@@ -1,53 +1,65 @@
 import pygame
+import json
 from color import *
 from scenes import *
 
-RESOLUTION = (1920, 1080)
-
-class Window:
-    def __init__(self, title, _resolution):
+class Display:
+    def __init__(self, title, _resolution, fullscreen):
         self.width = _resolution[0]
         self.height = _resolution[1]
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        if fullscreen:
+            self.screen = pygame.display.set_mode((self.width , self.height), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((self.width , self.height))
         pygame.display.set_caption(title)
+    
+    def set_display(self, resolution, fullscreen):
+        self.width = resolution[0]
+        self.height = resolution[1]
+        if fullscreen:
+            self.screen = pygame.display.set_mode((self.width , self.height), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((self.width , self.height))
 
 class Render:
     def __init__(self, engine):
-        self.window = engine.window
+        self.display = engine.display
         self.font = pygame.font.SysFont(None, 24)
         self.title_font = pygame.font.SysFont(None, 70)
 
     def update(self, scene):
         """Rendering the current scene by filling the background color, blitting the entities, 
-        and drawing the GUI elements. Also renders the fps in the top right corner"""
+        and drawing the GUI elements, renders the fps in the top right corner"""
         if scene.background_colour != None:
-            self.window.screen.fill(scene.background_colour)
+            self.display.screen.fill(scene.background_colour)
 
         for obj in scene.entity_render_list:
-            self.window.screen.blit(obj.surface, (obj.x, obj.y))
+            self.display.screen.blit(obj.surface, (obj.x, obj.y))
         
         if scene.num == 1:
             for obj in engine.game.foods:
-                self.window.screen.blit(obj.surface, (obj.x, obj.y))
+                self.display.screen.blit(obj.surface, (obj.x, obj.y))
 
         for gui in scene.gui_render_list:
             gui.draw()
     
         fps = self.font.render(f'Fps : {round(engine.clock.get_fps())}', True, (0,0,0))
-        self.window.screen.blit(fps, (window.width - 100, 20))
+        self.display.screen.blit(fps, (display.width - 100, 20))
 
         pygame.display.flip()
 
 class Engine:
-    def __init__(self, _window):
-        self.window = _window
+    def __init__(self, _display, _prefs):
+        self.prefs = _prefs
+        self.display = _display
         self.is_running = True
         self.clock = pygame.time.Clock()
         self.render = Render(self)
         self.main_menu = Main_Menu(self)
         self.game = Game(self)
         self.retry_menu = Retry_Menu(self)
-        self.scenes = [self.main_menu, self.game, self.retry_menu]
+        self.settings_menu = Settings_Menu(self)
+        self.scenes = [self.main_menu, self.game, self.retry_menu, self.settings_menu]
         self.current_scene_num = 0
         self.current_scene = self.main_menu
 
@@ -107,7 +119,7 @@ class Engine:
             self.current_scene.player.move("u")
         if keys[pygame.K_DOWN]:
             self.current_scene.player.move("d")
-            
+
         pos_player = self.current_scene.player.get_center()
         self.current_scene.ennemy.move(pos_player[0], pos_player[1])
         
@@ -144,12 +156,47 @@ class Engine:
             self.scenes[1] = self.game
         self.current_scene = self.scenes[num]
         self.current_scene_num = num
-    
+
+    def change_settings(self, new_data):
+        old_data = self.prefs.data
+        prefs.load(new_data)
+
+        if old_data["fullscreen"] != new_data["fullscreen"] or old_data["resolution"] != new_data["resolution"]:
+            self.display.set_display(new_data["resolution"], new_data["fullscreen"])
+
     def stop_all(self):
         self.is_running = False
 
+
+class Preferences():
+    def __init__(self):
+        """Load preferences with the file preferences.txt if an occurrence doesn't exist, create it"""
+        with open('preferences.txt', "r") as f:
+            raw = f.read()
+        try:
+            prefs = json.loads(raw)
+        except:
+            prefs = {}
+        
+        if not("fullscreen" in prefs):
+            prefs["fullscreen"] = True
+
+        if not("resolution") in prefs:
+            prefs["resolution"] = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+        
+        with open("preferences.txt", "w") as outfile:
+            json.dump(prefs, outfile)
+        
+        self.data = prefs
+    
+    def load(self, _data):
+        with open("preferences.txt", "w") as outfile:
+            json.dump(_data, outfile)
+        self.data = _data
+
 pygame.init()
-window = Window("Cube_game", RESOLUTION)
-engine = Engine(window)
+prefs = Preferences()
+display = Display("Cube_game", prefs.data["resolution"], prefs.data["fullscreen"])
+engine = Engine(display, prefs)
 
 engine.update()
