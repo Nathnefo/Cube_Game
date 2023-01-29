@@ -4,7 +4,7 @@
 
 ## Presentation
 ---
-The goal of this game is to eat food (black square) with your player (blue square) and avoid the red square.
+The goal of this game is to eat food (black square) with your player (blue square) and avoid the red square. You can also upgrade the player with points.
 
 **Controls** : Arrow keys
 
