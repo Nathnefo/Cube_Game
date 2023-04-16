@@ -18,6 +18,7 @@ class Entity:
 class Player(Entity):
     def __init__(self, _x, _y, _display):
         self.display = _display
+        self.bullet_speed_mult = 1
         super().__init__(_x, _y, 50, 50, 4, Color.blue) 
     
     def move(self, direction):
@@ -84,3 +85,13 @@ class Food(Entity):
         """If eaten, it teleport to a new random location"""
         self.x = randint(0, self.display.width)
         self.y = randint(0, self.display.height)
+
+class Bullet(Entity):
+    def __init__(self,  _display, _x, _y, v_director, _width = 20, _height = 20, _speed = 1, _color = Color.l_green):
+        self.display = _display
+        self.v_director = v_director
+        super().__init__(_x - _width//2, _y - _height//2, _width, _height, _speed, _color)
+    
+    def update(self):
+        self.x += self.v_director[0]
+        self.y += self.v_director[1]

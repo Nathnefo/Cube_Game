@@ -4,13 +4,8 @@ from color import *
 from scenes import *
 
 class Display:
-    def __init__(self, title, _resolution, fullscreen):
-        self.width = _resolution[0]
-        self.height = _resolution[1]
-        if fullscreen:
-            self.screen = pygame.display.set_mode((self.width , self.height), pygame.FULLSCREEN)
-        else:
-            self.screen = pygame.display.set_mode((self.width , self.height))
+    def __init__(self, title, resolution, fullscreen):
+        self.set_display(resolution, fullscreen)
         pygame.display.set_caption(title)
     
     def set_display(self, resolution, fullscreen):
@@ -33,17 +28,21 @@ class Render:
         if scene.background_colour != None:
             self.display.screen.fill(scene.background_colour)
 
-        for obj in scene.entity_render_list:
-            self.display.screen.blit(obj.surface, (obj.x, obj.y))
-        
         if scene.num == 1:
             for obj in engine.game.foods:
                 self.display.screen.blit(obj.surface, (obj.x, obj.y))
+            
+            for obj in engine.game.bullets:
+                self.display.screen.blit(obj.surface, (obj.x, obj.y))
+
+        for obj in scene.entity_render_list:
+            self.display.screen.blit(obj.surface, (obj.x, obj.y))
+        
 
         for gui in scene.gui_render_list:
             gui.draw()
     
-        fps = self.font.render(f'Fps : {round(engine.clock.get_fps())}', True, (0,0,0))
+        fps = self.font.render(f'Fps : {round(engine.clock.get_fps())}', True, Color.blue)
         self.display.screen.blit(fps, (display.width - 100, 20))
 
         pygame.display.flip()
@@ -108,30 +107,6 @@ class Engine:
             self.left_click = True
         if self.left_was_pressed != left_pressed:
             self.left_was_pressed = left_pressed
-    
-    def main_game_loop(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self.current_scene.player.move("l")
-        if keys[pygame.K_RIGHT]:
-            self.current_scene.player.move("r")
-        if keys[pygame.K_UP]:
-            self.current_scene.player.move("u")
-        if keys[pygame.K_DOWN]:
-            self.current_scene.player.move("d")
-
-        pos_player = self.current_scene.player.get_center()
-        self.current_scene.ennemy.move(pos_player[0], pos_player[1])
-        
-        for food in self.current_scene.foods:
-            if self.detect_collide(self.current_scene.player, food):
-                food.eated()
-                self.current_scene.add_point()
-        
-        """On collision between the player and the enemy, end the game"""
-        if self.detect_collide(self.current_scene.player, self.current_scene.ennemy):
-            self.render.update(self.current_scene)
-            self.change_scene(2)
 
     def update(self):
         while self.is_running:
@@ -140,16 +115,16 @@ class Engine:
                     self.is_running = False
             
             self.update_left_click()
-    
+
             self.update_buttons()
 
-            if self.current_scene_num == 1:
-                self.main_game_loop()
+            self.current_scene.loop()
             self.render.update(self.current_scene)
             self.clock.tick(180)
     
     def change_scene(self, num):
         """When load scene 1, make a new game"""
+        self.left_click = False
         self.current_scene.on_quit()
         if num == 1:
             self.game = Game(self)
@@ -200,3 +175,4 @@ display = Display("Cube_game", prefs.data["resolution"], prefs.data["fullscreen"
 engine = Engine(display, prefs)
 
 engine.update()
+pygame.quit()
